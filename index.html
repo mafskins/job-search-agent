@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Search Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e8e8e8; min-height: 100vh; }
+  .header { padding: 2rem; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; font-weight: 500; color: #fff; }
+  .header p { font-size: 13px; color: #666; margin-top: 2px; }
+  .actions { display: flex; gap: 10px; }
+  button { font-family: inherit; font-size: 13px; padding: 8px 16px; border-radius: 6px; border: 1px solid #333; background: transparent; color: #e8e8e8; cursor: pointer; transition: all 0.15s; }
+  button:hover { background: #1a1a1a; border-color: #444; }
+  button.primary { background: #fff; color: #000; border-color: #fff; }
+  button.primary:hover { background: #e8e8e8; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status { padding: 1rem 2rem; font-size: 13px; color: #666; border-bottom: 1px solid #1a1a1a; display: none; }
+  .status.visible { display: block; }
+  .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; gap: 1rem; }
+  .auth-screen h2 { font-size: 22px; font-weight: 500; }
+  .auth-screen p { font-size: 14px; color: #666; max-width: 400px; line-height: 1.6; }
+  .dashboard { display: none; padding: 2rem; }
+  .dashboard.visible { display: block; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
+  .stat { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1rem; }
+  .stat-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 500; color: #fff; }
+  .jobs { display: flex; flex-direction: column; gap: 12px; }
+  .job-card { background: #141414; border: 1px solid #222; border-radius: 10px; padding: 1.25rem; transition: border-color 0.15s; }
+  .job-card:hover { border-color: #333; }
+  .job-card.apply { border-left: 3px solid #4ade80; }
+  .job-card.worth { border-left: 3px solid #fbbf24; }
+  .job-card.skip { border-left: 3px solid #333; opacity: 0.6; }
+  .job-card.relationship { border-left: 3px solid #818cf8; }
+  .job-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .job-title { font-size: 15px; font-weight: 500; color: #fff; margin-bottom: 2px; }
+  .job-org { font-size: 13px; color: #666; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+  .badge.apply { background: #052e16; color: #4ade80; }
+  .badge.worth { background: #2d1f07; color: #fbbf24; }
+  .badge.skip { background: #1a1a1a; color: #555; }
+  .badge.relationship { background: #1e1b4b; color: #818cf8; }
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .score-num { font-size: 20px; font-weight: 500; color: #fff; }
+  .score-bar-wrap { flex: 1; height: 3px; background: #222; border-radius: 2px; }
+  .score-bar { height: 100%; border-radius: 2px; }
+  .salary { font-size: 12px; color: #555; margin-bottom: 10px; }
+  .summary { font-size: 13px; color: #999; line-height: 1.6; margin-bottom: 10px; }
+  .risks { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .risk { font-size: 12px; color: #666; display: flex; gap: 6px; }
+  .risk-dot { width: 4px; height: 4px; border-radius: 50%; background: #e24b4a; margin-top: 6px; flex-shrink: 0; }
+  .rel-note { font-size: 12px; color: #818cf8; background: #1e1b4b; padding: 6px 10px; border-radius: 4px; margin-bottom: 10px; }
+  .job-actions { display: flex; gap: 8px; }
+  .job-actions button { font-size: 12px; padding: 5px 12px; }
+  .empty { text-align: center; padding: 4rem; color: #444; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Job Search Agent</h1>
+    <p>Mafeking Ihimaera — AI & Advisory Roles</p>
+  </div>
+  <div class="actions">
+    <button onclick="fetchJobs()" id="fetchBtn">Scan Gmail</button>
+  </div>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="auth-screen" id="authScreen">
+  <h2>Connect your Gmail</h2>
+  <p>The agent will scan your Seek and LinkedIn alert emails, score each role against your criteria, and surface the best matches here.</p>
+  <button class="primary" onclick="window.location.href='/auth'">Connect Gmail</button>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total scanned</div><div class="stat-value" id="statTotal">0</div></div>
+    <div class="stat"><div class="stat-label">Apply now</div><div class="stat-value" id="statApply">0</div></div>
+    <div class="stat"><div class="stat-label">Worth reading</div><div class="stat-value" id="statWorth">0</div></div>
+    <div class="stat"><div class="stat-label">Relationship plays</div><div class="stat-value" id="statRel">0</div></div>
+  </div>
+  <div class="jobs" id="jobsList"></div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+if (params.get('authed') === 'true') {
+  showDashboard();
+}
+
+function showDashboard() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('dashboard').classList.add('visible');
+}
+
+function setStatus(msg) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function clearStatus() {
+  const el = document.getElementById('status');
+  el.classList.remove('visible');
+}
+
+async function fetchJobs() {
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+  setStatus('Connecting to Gmail and scoring roles — this takes about 30 seconds...');
+  showDashboard();
+
+  try {
+    const res = await fetch('/fetch-jobs');
+    const data = await res.json();
+
+    if (data.error) {
+      setStatus('Error: ' + data.error + ' — try connecting Gmail first.');
+      return;
+    }
+
+    renderJobs(data.jobs);
+    clearStatus();
+  } catch (err) {
+    setStatus('Something went wrong. Make sure you have connected Gmail.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Scan Gmail';
+  }
+}
+
+function renderJobs(jobs) {
+  const list = document.getElementById('jobsList');
+  
+  document.getElementById('statTotal').textContent = jobs.length;
+  document.getElementById('statApply').textContent = jobs.filter(j => j.recommendation === 'APPLY NOW').length;
+  document.getElementById('statWorth').textContent = jobs.filter(j => j.recommendation === 'WORTH READING').length;
+  document.getElementById('statRel').textContent = jobs.filter(j => j.relationshipPlay).length;
+
+  if (jobs.length === 0) {
+    list.innerHTML = '<div class="empty">No job alert emails found in the last 7 days. Make sure your Seek and LinkedIn alerts are set up.</div>';
+    return;
+  }
+
+  list.innerHTML = jobs.map(job => {
+    const recClass = job.recommendation === 'APPLY NOW' ? 'apply' : job.recommendation === 'WORTH READING' ? 'worth' : job.relationshipPlay ? 'relationship' : 'skip';
+    const pct = (job.score / 10) * 100;
+    const barColor = job.score >= 7 ? '#4ade80' : job.score >= 5 ? '#fbbf24' : '#444';
+
+    return `
+    <div class="job-card ${recClass}">
+      <div class="job-top">
+        <div>
+          <div class="job-title">${job.title || 'Unknown role'}</div>
+          <div class="job-org">${job.org || 'Unknown org'}</div>
+        </div>
+        <span class="badge ${recClass}">${job.recommendation}</span>
+      </div>
+      <div class="score-row">
+        <span class="score-num">${job.score}/10</span>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${pct}%;background:${barColor}"></div></div>
+        <span style="font-size:12px;color:#555">${job.salary || 'Salary not stated'}</span>
+      </div>
+      <div class="summary">${job.summary || ''}</div>
+      ${job.risks?.length ? `<div class="risks">${job.risks.map(r => `<div class="risk"><div class="risk-dot"></div><span>${r}</span></div>`).join('')}</div>` : ''}
+      ${job.relationshipPlay && job.relationshipPlayNote ? `<div class="rel-note">Relationship play: ${job.relationshipPlayNote}</div>` : ''}
+      <div class="job-actions">
+        <button onclick="draftCover('${job.title?.replace(/'/g, "\\'")}', '${job.org?.replace(/'/g, "\\'")}')">Draft cover letter</button>
+        <button onclick="draftOutreach('${job.title?.replace(/'/g, "\\'")}', '${job.org?.replace(/'/g, "\\'")}')">Draft outreach</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function draftCover(title, org) {
+  window.open(`https://claude.ai/new?q=Draft a cover letter for the ${encodeURIComponent(title)} role at ${encodeURIComponent(org)}`, '_blank');
+}
+
+function draftOutreach(title, org) {
+  window.open(`https://claude.ai/new?q=Draft a LinkedIn outreach message for the ${encodeURIComponent(title)} role at ${encodeURIComponent(org)}`, '_blank');
+}
+</script>
+</body>
+</html>
