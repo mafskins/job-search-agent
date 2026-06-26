@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Job Search Agent — Mafeking Ihimaera</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:          #F4F6F9;
+    --surface:     #FFFFFF;
+    --surface2:    #F0F3F7;
+    --border:      #E2E8F0;
+    --border2:     #CBD5E1;
+    --text:        #0F172A;
+    --text-mid:    #374151;
+    --text-dim:    #4B5563;
+    --text-faint:  #6B7280;
+    --green:       #00C96B;
+    --green-dark:  #006837;
+    --green-bg:    #ECFDF5;
+    --green-border:#6EE7B7;
+    --amber:       #B45309;
+    --amber-light: #D97706;
+    --amber-bg:    #FFFBEB;
+    --amber-border:#FCD34D;
+    --violet:      #6D28D9;
+    --violet-light:#7C3AED;
+    --violet-bg:   #F5F3FF;
+    --violet-border:#C4B5FD;
+    --red:         #DC2626;
+    --teal:        #0E7490;
+    --teal-bg:     #ECFEFF;
+    --teal-border: #67E8F9;
+    --blue:        #1D4ED8;
+    --blue-bg:     #EFF6FF;
+    --blue-border: #93C5FD;
+    --maori:       #92400E;
+    --maori-bg:    #FEF3C7;
+    --maori-border:#FDE68A;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-ui:   'Inter', sans-serif;
+    --radius:    8px;
+    --radius-lg: 12px;
+    --shadow:    0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-ui); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  /* HEADER */
+  .header { height: 56px; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; background: #0F172A; border-bottom: 1px solid #1E293B; position: sticky; top: 0; z-index: 100; gap: 1rem; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-block { display: flex; flex-direction: column; gap: 1px; }
+  .logo-main { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--green); white-space: nowrap; letter-spacing: 0.02em; }
+  .logo-sub { font-family: var(--font-mono); font-size: 9px; color: #334155; letter-spacing: 0.06em; text-transform: uppercase; }
+  .header-div { width: 1px; height: 28px; background: #1E293B; flex-shrink: 0; }
+  .header-name { font-size: 14px; font-weight: 600; color: #F1F5F9; white-space: nowrap; }
+  .header-tagline { font-family: var(--font-mono); font-size: 10px; color: #475569; font-style: italic; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .last-scan { font-family: var(--font-mono); font-size: 11px; color: #475569; }
+
+  /* BUTTONS */
+  .btn { font-family: var(--font-ui); font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border2); background: var(--surface); color: var(--text-mid); cursor: pointer; transition: all 0.12s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: var(--shadow); }
+  .btn:hover { background: var(--surface2); border-color: #94A3B8; color: var(--text); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+  .btn-primary:hover { background: #00B05E; border-color: #00B05E; color: #fff; }
+  .btn-sm { font-size: 11px; padding: 4px 10px; border-radius: 5px; box-shadow: none; }
+  .btn-danger { background: transparent; color: var(--text-faint); border-color: var(--border); font-size: 11px; padding: 4px 10px; border-radius: 5px; }
+  .btn-danger:hover { background: #FEF2F2; color: var(--red); border-color: #FECACA; }
+  .btn-apply { background: var(--green); color: #fff; border-color: var(--green); font-size: 11px; padding: 4px 10px; border-radius: 5px; font-weight: 600; }
+  .btn-apply:hover { background: #00B05E; border-color: #00B05E; color: #fff; }
+
+  /* STATUS BAR */
+  .status-bar { display: none; height: 36px; padding: 0 2rem; align-items: center; gap: 10px; background: #F0FDF4; border-bottom: 1px solid var(--green-border); font-family: var(--font-mono); font-size: 11px; color: var(--green-dark); }
+  .status-bar.visible { display: flex; }
+  .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)} }
+
+  /* HERO */
+  .hero-strip { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-bottom: 1px solid #1E293B; padding: 1.25rem 2rem; }
+  .hero-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .hero-label { font-family: var(--font-mono); font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 0.1em; }
+  .hero-title { font-size: 20px; font-weight: 700; color: #F8FAFC; letter-spacing: -0.02em; }
+  .hero-desc { font-size: 12px; color: #64748B; margin-top: 2px; }
+  .hero-quote { font-family: var(--font-mono); font-size: 10px; color: var(--green); font-style: italic; }
+
+  /* DASHBOARD */
+  .dashboard { max-width: 1000px; margin: 0 auto; padding: 1.75rem 2rem; }
+
+  /* STAT CARDS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.25rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; box-shadow: var(--shadow); position: relative; overflow: hidden; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .stat:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .stat::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .stat.total::before  { background: #94A3B8; }
+  .stat.apply::before  { background: var(--green); }
+  .stat.worth::before  { background: var(--amber-light); }
+  .stat.rel::before    { background: var(--violet-light); }
+  .stat.active.apply  { border-color: var(--green); background: var(--green-bg); box-shadow: 0 0 0 3px rgba(0,201,107,0.15); }
+  .stat.active.worth  { border-color: var(--amber-light); background: var(--amber-bg); box-shadow: 0 0 0 3px rgba(217,119,6,0.15); }
+  .stat.active.rel    { border-color: var(--violet-light); background: var(--violet-bg); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+  .stat.active.total  { border-color: var(--border2); background: var(--surface2); }
+  .stat-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .stat-value { font-size: 32px; font-weight: 600; color: var(--text); line-height: 1; }
+  .stat.apply .stat-value { color: var(--green-dark); }
+  .stat.worth .stat-value { color: var(--amber); }
+  .stat.rel   .stat-value { color: var(--violet); }
+
+  /* TAG FILTERS */
+  .tag-filter-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tag-filter-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-right: 2px; }
+  .tag-filter-btn { font-family: var(--font-mono); font-size: 10px; font-weight: 500; padding: 3px 9px; border-radius: 4px; border: 1px solid; background: var(--surface); cursor: pointer; transition: all 0.12s; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+  .tag-filter-btn.tf-govt    { color: var(--teal);  border-color: var(--teal-border); }
+  .tag-filter-btn.tf-consult { color: var(--blue);  border-color: var(--blue-border); }
+  .tag-filter-btn.tf-maori   { color: var(--maori); border-color: var(--maori-border); }
+  .tag-filter-btn.tf-remote  { color: var(--green-dark); border-color: var(--green-border); }
+  .tag-filter-btn.tf-ngo     { color: var(--text-dim); border-color: var(--border2); }
+  .tag-filter-btn.active.tf-govt    { background: var(--teal-bg); }
+  .tag-filter-btn.active.tf-consult { background: var(--blue-bg); }
+  .tag-filter-btn.active.tf-maori   { background: var(--maori-bg); }
+  .tag-filter-btn.active.tf-remote  { background: var(--green-bg); }
+  .tag-filter-btn.active.tf-ngo     { background: var(--surface2); }
+  .clear-filters-btn { font-size: 11px; padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text-faint); cursor: pointer; display: none; }
+  .clear-filters-btn.visible { display: block; }
+
+  /* JOB CARDS */
+  .jobs { display: flex; flex-direction: column; gap: 10px; }
+
+  .job-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.25rem 1.1rem 1.4rem; box-shadow: var(--shadow); position: relative; overflow: hidden; transition: all 0.2s; }
+  .job-card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
+  .job-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .job-card.apply::before        { background: var(--green); }
+  .job-card.worth::before        { background: var(--amber-light); }
+  .job-card.skip::before         { background: #CBD5E1; }
+  .job-card.relationship::before { background: var(--violet-light); }
+
+  /* SEEN/UNSEEN states */
+  .job-card.is-new { border-color: var(--border); }
+  .job-card.is-seen { opacity: 0.55; }
+  .job-card.is-seen:hover { opacity: 0.8; }
+  .new-badge { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--green); background: var(--green-bg); border: 1px solid var(--green-border); padding: 1px 6px; border-radius: 3px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 6px; vertical-align: middle; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.65rem; }
+  .job-meta { flex: 1; min-width: 0; }
+  .job-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .job-card.is-seen .job-title { font-weight: 400; }
+  .job-org-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .job-org { font-size: 13px; color: var(--text-dim); }
+
+  /* SECTOR TAGS */
+  .sector-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .stag { font-family: var(--font-mono); font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid; white-space: nowrap; cursor: pointer; transition: all 0.12s; }
+  .stag-govt    { background: var(--teal-bg);  color: var(--teal);  border-color: var(--teal-border); }
+  .stag-consult { background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue-border); }
+  .stag-maori   { background: var(--maori-bg); color: var(--maori); border-color: var(--maori-border); }
+  .stag-remote  { background: var(--green-bg); color: var(--green-dark); border-color: var(--green-border); }
+  .stag-ngo     { background: var(--surface2); color: var(--text-dim); border-color: var(--border2); }
+
+  /* BADGE */
+  .badge { font-family: var(--font-mono); font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid; align-self: flex-start; }
+  .badge.apply        { background: #00C96B; color: #fff; border-color: #00C96B; box-shadow: 0 0 8px rgba(0,201,107,0.4); }
+  .badge.worth        { background: var(--amber-light); color: #fff; border-color: var(--amber-light); box-shadow: 0 0 8px rgba(217,119,6,0.3); }
+  .badge.skip         { background: var(--surface2); color: var(--text-faint); border-color: var(--border); }
+  .badge.relationship { background: var(--violet-light); color: #fff; border-color: var(--violet-light); box-shadow: 0 0 8px rgba(124,58,237,0.3); }
+
+  /* SCORE */
+  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+  .score-num { font-family: var(--font-mono); font-size: 28px; font-weight: 700; line-height: 1; min-width: 2.2rem; }
+  .score-num.elite { color: #00FF88; text-shadow: 0 0 12px rgba(0,255,136,0.5); }
+  .score-num.high  { color: var(--green); }
+  .score-num.mid   { color: var(--amber-light); }
+  .score-num.low   { color: var(--red); }
+  .score-of { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-right: 4px; }
+  .score-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 3px; }
+  .salary-pill { font-family: var(--font-mono); font-size: 11px; color: var(--text-mid); background: var(--surface2); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; white-space: nowrap; }
+
+  /* CARD BODY */
+  .divider { height: 1px; background: var(--border); margin: 0.7rem 0; }
+  .summary { font-size: 13px; color: var(--text-mid); line-height: 1.7; margin-bottom: 0.75rem; }
+  .risks-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+  .risks { display: flex; flex-direction: column; gap: 4px; margin-bottom: 0.75rem; }
+  .risk { display: flex; align-items: flex-start; gap: 7px; font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+  .risk-icon { font-size: 11px; color: var(--red); margin-top: 1px; flex-shrink: 0; }
+  .rel-note { font-size: 13px; color: var(--violet); background: var(--violet-bg); border: 1px solid var(--violet-border); padding: 10px 12px; border-radius: 6px; margin-bottom: 0.75rem; display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+  .maori-note { font-size: 13px; color: var(--maori); background: var(--maori-bg); border: 1px solid var(--maori-border); padding: 10px 12px; border-radius: 6px; margin-bottom: 0.75rem; display: flex; gap: 8px; align-items: flex-start; line-height: 1.6; }
+  .note-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .card-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 0.2rem; align-items: center; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .results-count { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 5rem 2rem; color: var(--text-faint); }
+  .empty-icon { font-family: var(--font-mono); font-size: 28px; margin-bottom: 1rem; color: var(--border2); }
+  .empty p { font-size: 14px; line-height: 1.7; max-width: 360px; margin: 0 auto; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-block">
+      <span class="logo-main">// AI JOB SEARCH AGENT</span>
+      <span class="logo-sub">powered by claude</span>
+    </div>
+    <div class="header-div"></div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <span class="header-name">Mafeking Ihimaera</span>
+      <span class="header-tagline">"The human version of an API"</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="last-scan" id="lastScan"></span>
+    <button class="btn btn-primary" onclick="fetchJobs()" id="fetchBtn">▶ Scan Seek</button>
+  </div>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <div class="pulse"></div>
+  <span id="statusText">Scanning Seek and scoring roles...</span>
+</div>
+
+<div class="hero-strip">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-label">// active dashboard</div>
+      <div class="hero-title">AI Job Search Agent</div>
+      <div class="hero-desc">Scanning Seek directly · scoring against your profile · surfacing the best matches</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="hero-quote">AI & Advisory · Wellington, NZ</div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <div class="stats">
+    <div class="stat total" onclick="toggleStatFilter('all')" id="stat-all">
+      <div class="stat-label">// Scanned</div>
+      <div class="stat-value" id="statTotal">—</div>
+    </div>
+    <div class="stat apply" onclick="toggleStatFilter('apply')" id="stat-apply">
+      <div class="stat-label">// Apply Now</div>
+      <div class="stat-value" id="statApply">—</div>
+    </div>
+    <div class="stat worth" onclick="toggleStatFilter('worth')" id="stat-worth">
+      <div class="stat-label">// Worth Reading</div>
+      <div class="stat-value" id="statWorth">—</div>
+    </div>
+    <div class="stat rel" onclick="toggleStatFilter('relationship')" id="stat-rel">
+      <div class="stat-label">// Relationship Plays</div>
+      <div class="stat-value" id="statRel">—</div>
+    </div>
+  </div>
+
+  <div class="tag-filter-bar" id="tagFilterBar" style="display:none">
+    <span class="tag-filter-label">sector:</span>
+    <button class="tag-filter-btn tf-govt"    onclick="toggleTagFilter('govt')"       id="tf-govt">GOVT</button>
+    <button class="tag-filter-btn tf-consult" onclick="toggleTagFilter('consulting')" id="tf-consulting">CONSULTING</button>
+    <button class="tag-filter-btn tf-maori"   onclick="toggleTagFilter('maori')"      id="tf-maori">MĀORI ORG</button>
+    <button class="tag-filter-btn tf-remote"  onclick="toggleTagFilter('remote')"     id="tf-remote">REMOTE OK</button>
+    <button class="tag-filter-btn tf-ngo"     onclick="toggleTagFilter('ngo')"        id="tf-ngo">NGO</button>
+    <button class="clear-filters-btn" onclick="clearAllFilters()" id="clearBtn">✕ Clear filters</button>
+  </div>
+
+  <div class="toolbar" id="toolbar" style="display:none">
+    <div class="toolbar-left">
+      <span class="results-count" id="resultsCount"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="markAllSeen()">Mark all as seen</button>
+      <button class="btn btn-danger" onclick="clearDismissed()">Reset board</button>
+    </div>
+  </div>
+
+  <div class="jobs" id="jobsList"></div>
+</div>
+
+<script>
+  let allJobs    = [];
+  let statFilter = 'all';
+  let activeTags = new Set();
+
+  function detectSectors(title, org, summary) {
+    const t = (title + ' ' + org + ' ' + (summary||'')).toLowerCase();
+    const tags = [];
+    if (/ministry|department|council|government|crown\b|acc\b|msd\b|mbie|nzta|police|treasury|inland revenue|public sector|public service|dpmc/.test(t)) tags.push('govt');
+    if (/deloitte|pwc|kpmg|\bey\b|ernst|accenture|capgemini|consult(ing|ancy)|acumen|solnet|assurity|allen.{1,6}clarke|vedarc/.test(t)) tags.push('consulting');
+    if (/m[āa]ori|iwi|hap[ūu]|wh[āa]nau|tpk\b|te puni|ng[āa]ti|ng[āa]i|tainui|ng[āa]puhi|te ao|kaupapa|mana whenua|oranga/.test(t)) tags.push('maori');
+    if (/foundation|charitable|trust\b|ngo\b|non-?profit|community org|social service/.test(t)) tags.push('ngo');
+    if (/remote|hybrid|flexible.{0,20}work|work from home|wfh/.test(t)) tags.push('remote');
+    return tags;
+  }
+
+  function sectorTagHTML(sectors) {
+    const map = { govt:['stag-govt','GOVT'], consulting:['stag-consult','CONSULTING'], maori:['stag-maori','MĀORI ORG'], ngo:['stag-ngo','NGO'], remote:['stag-remote','REMOTE OK'] };
+    return sectors.map(s => {
+      const [cls, lbl] = map[s]||[];
+      if (!cls) return '';
+      return `<span class="stag ${cls}" onclick="toggleTagFilter('${s}');event.stopPropagation()">${lbl}</span>`;
+    }).join('');
+  }
+
+  function toggleStatFilter(f) {
+    statFilter = (statFilter === f && f !== 'all') ? 'all' : f;
+    ['all','apply','worth','rel'].forEach(id => {
+      const el = document.getElementById('stat-' + id);
+      if (el) el.classList.toggle('active', 
+        (id === 'all' && statFilter === 'all') ||
+        (id === 'apply' && statFilter === 'apply') ||
+        (id === 'worth' && statFilter === 'worth') ||
+        (id === 'rel' && statFilter === 'relationship')
+      );
+    });
+    renderJobs();
+  }
+
+  function toggleTagFilter(tag) {
+    if (activeTags.has(tag)) activeTags.delete(tag);
+    else activeTags.add(tag);
+    ['govt','consulting','maori','remote','ngo'].forEach(t => {
+      const btn = document.getElementById('tf-' + t);
+      if (btn) btn.classList.toggle('active', activeTags.has(t));
+    });
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) clearBtn.classList.toggle('visible', activeTags.size > 0 || statFilter !== 'all');
+    renderJobs();
+  }
+
+  function clearAllFilters() {
+    statFilter = 'all';
+    activeTags.clear();
+    toggleStatFilter('all');
+  }
+
+  const scoreClass = n => n >= 9 ? 'elite' : n >= 7 ? 'high' : n >= 5 ? 'mid' : 'low';
+  const barColor   = n => n >= 9 ? '#00FF88' : n >= 7 ? 'var(--green)' : n >= 5 ? 'var(--amber-light)' : 'var(--red)';
+
+  function setStatus(msg) { document.getElementById('statusText').textContent = msg; document.getElementById('statusBar').classList.add('visible'); }
+  function clearStatus()  { document.getElementById('statusBar').classList.remove('visible'); }
+
+  async function fetchJobs() {
+    const btn = document.getElementById('fetchBtn');
+    btn.disabled = true; btn.innerHTML = '◌ Scanning...';
+    setStatus('Fetching Seek pages and scoring roles — this takes 1-2 minutes...');
+    try {
+      const res  = await fetch('/fetch-seek');
+      const data = await res.json();
+      if (data.error) { setStatus('Error: ' + data.error); return; }
+      allJobs = data.jobs || [];
+      renderStats();
+      document.getElementById('tagFilterBar').style.display = allJobs.length ? 'flex' : 'none';
+      document.getElementById('toolbar').style.display = allJobs.length ? 'flex' : 'none';
+      renderJobs();
+      clearStatus();
+      const now = new Date();
+      document.getElementById('lastScan').textContent = 'Last scan: ' + now.toLocaleTimeString('en-NZ', {hour:'2-digit',minute:'2-digit'});
+
+      // Auto-mark as seen after 3 seconds
+      setTimeout(() => {
+        const keys = allJobs.filter(j => j.isNew).map(j => j.key).filter(Boolean);
+        if (keys.length) fetch('/mark-seen', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jobKeys: keys }) });
+      }, 3000);
+
+    } catch(e) {
+      setStatus('Something went wrong. Check the terminal.');
+    } finally {
+      btn.disabled = false; btn.innerHTML = '▶ Scan Seek';
+    }
+  }
+
+  function renderStats() {
+    document.getElementById('statTotal').textContent = allJobs.length;
+    document.getElementById('statApply').textContent = allJobs.filter(j => j.recommendation === 'APPLY NOW').length;
+    document.getElementById('statWorth').textContent = allJobs.filter(j => j.recommendation === 'WORTH READING').length;
+    document.getElementById('statRel').textContent   = allJobs.filter(j => j.relationshipPlay).length;
+  }
+
+  function renderJobs() {
+    const list = document.getElementById('jobsList');
+    let jobs = allJobs;
+    if (statFilter === 'apply')        jobs = jobs.filter(j => j.recommendation === 'APPLY NOW');
+    else if (statFilter === 'worth')   jobs = jobs.filter(j => j.recommendation === 'WORTH READING');
+    else if (statFilter === 'relationship') jobs = jobs.filter(j => j.relationshipPlay);
+    if (activeTags.size > 0) {
+      jobs = jobs.filter(j => {
+        const sectors = new Set(detectSectors(j.title||'', j.org||'', j.summary||''));
+        return [...activeTags].every(tag => sectors.has(tag));
+      });
+    }
+
+    document.getElementById('resultsCount').textContent = `// ${jobs.length} role${jobs.length !== 1 ? 's' : ''} shown`;
+
+    if (allJobs.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">◻</div><p>Press Scan Seek to find roles matching your profile.</p></div>`;
+      return;
+    }
+    if (jobs.length === 0) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">◻</div><p>No roles match the current filters. <a href="#" onclick="clearAllFilters();return false;" style="color:var(--blue)">Clear filters</a></p></div>`;
+      return;
+    }
+
+    const recClass = j => j.recommendation === 'APPLY NOW' ? 'apply' : j.recommendation === 'WORTH READING' ? 'worth' : j.relationshipPlay ? 'relationship' : 'skip';
+    const badgeLbl = j => j.recommendation === 'APPLY NOW' ? 'APPLY NOW' : j.recommendation === 'WORTH READING' ? 'WORTH READING' : j.relationshipPlay ? 'REL. PLAY' : 'SKIP';
+    const esc = s => (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+
+    list.innerHTML = jobs.map(job => {
+      const cls     = recClass(job);
+      const pct     = Math.round((job.score/10)*100);
+      const sectors = detectSectors(job.title||'', job.org||'', job.summary||'');
+      const isMaori = sectors.includes('maori');
+      const seenClass = job.isNew ? 'is-new' : 'is-seen';
+      const newBadge  = job.isNew ? '<span class="new-badge">NEW</span>' : '';
+
+      return `
+      <div class="job-card ${cls} ${seenClass}">
+        <div class="card-top">
+          <div class="job-meta">
+            <div class="job-title">${job.title||'Unknown role'}${newBadge}</div>
+            <div class="job-org-row">
+              <span class="job-org">${job.org||'Unknown organisation'}</span>
+              ${sectors.length ? `<div class="sector-tags">${sectorTagHTML(sectors)}</div>` : ''}
+            </div>
+          </div>
+          <span class="badge ${cls}">${badgeLbl(job)}</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-num ${scoreClass(job.score)}">${job.score}</span>
+          <span class="score-of">/10</span>
+          <div class="score-track"><div class="score-fill" style="width:${pct}%;background:${barColor(job.score)}"></div></div>
+          ${job.salary ? `<span class="salary-pill">${job.salary}</span>` : ''}
+        </div>
+
+        <div class="divider"></div>
+
+        ${job.summary ? `<div class="summary">${job.summary}</div>` : ''}
+
+        ${job.risks?.length ? `
+          <div class="risks-label">// risks</div>
+          <div class="risks">${job.risks.map(r => `<div class="risk"><span class="risk-icon">▲</span><span>${r}</span></div>`).join('')}</div>` : ''}
+
+        ${isMaori ? `<div class="maori-note"><span class="note-icon">◈</span><span>He oranga ngākau, he pikinga waiora — consider cultural alignment and data sovereignty fit.</span></div>` : ''}
+
+        ${job.relationshipPlay && job.relationshipPlayNote ? `<div class="rel-note"><span class="note-icon">◈</span><span>${job.relationshipPlayNote}</span></div>` : ''}
+
+        <div class="card-actions">
+          ${job.url ? `<a href="${job.url}" target="_blank" class="btn btn-apply">↗ Apply</a>` : ''}
+          <button class="btn btn-sm" onclick="draftCover('${esc(job.title)}','${esc(job.org)}')">Cover letter</button>
+          <button class="btn btn-sm" onclick="draftOutreach('${esc(job.title)}','${esc(job.org)}')">Outreach</button>
+          <button class="btn btn-danger" onclick="dismissJob('${esc(job.key)}', this)">Dismiss</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function dismissJob(key, btn) {
+    await fetch('/dismiss', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jobKey: key }) });
+    allJobs = allJobs.filter(j => j.key !== key);
+    renderStats();
+    renderJobs();
+  }
+
+  async function markAllSeen() {
+    const keys = allJobs.map(j => j.key).filter(Boolean);
+    await fetch('/mark-seen', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jobKeys: keys }) });
+    allJobs = allJobs.map(j => ({ ...j, isNew: false }));
+    renderJobs();
+  }
+
+  async function clearDismissed() {
+    if (!confirm('Reset the board? This will clear all dismissed jobs and seen history.')) return;
+    await fetch('/clear-dismissed', { method:'POST' });
+    allJobs = [];
+    renderStats();
+    renderJobs();
+  }
+
+  function draftCover(title, org) {
+    window.open(`https://claude.ai/new?q=Draft a cover letter for the ${encodeURIComponent(title)} role at ${encodeURIComponent(org)}`, '_blank');
+  }
+  function draftOutreach(title, org) {
+    window.open(`https://claude.ai/new?q=Draft a LinkedIn outreach message for the ${encodeURIComponent(title)} role at ${encodeURIComponent(org)}`, '_blank');
+  }
+</script>
+</body>
+</html>
